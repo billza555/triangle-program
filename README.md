@@ -10,7 +10,7 @@ git clone https://github.com/NoNnO7/triangle-program.git [folder_name]
 ```bash
 npm install
 
-ืnpm run build
+npm run build
 
 npm start
 ```
