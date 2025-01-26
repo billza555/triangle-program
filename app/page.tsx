@@ -8,6 +8,7 @@ import isoscelesImg from './assets/images/isosceles.png';
 import rightTriangleImg from './assets/images/right_triangle.png';
 import scaleneImg from './assets/images/scalene.png';
 import iconImg from './assets/images/Image_Icon.png'; // Import Image from next/image
+import Swal from 'sweetalert2';
 
 export default function Home() {
   // State สำหรับเก็บค่าด้านของสามเหลี่ยม
@@ -19,7 +20,7 @@ export default function Home() {
   const [language, setLanguage] = useState<"th" | "en">("th");
   const [perimeter, setPerimeter] = useState<number | null>(null);
   const [area, setArea] = useState<number | null>(null);
-
+  
   const triangleImages = {
     equilateral: equilateralImg,
     isosceles: isoscelesImg,
@@ -28,26 +29,35 @@ export default function Home() {
     icon: iconImg
   };
 
+  const isValidNumber = (value: string): boolean => {
+    const regex = /^\d+(\.\d{1,2})?$/; // ตรวจสอบว่ามีทศนิยมไม่เกิน 2 ตำแหน่ง
+    return regex.test(value) && parseFloat(value) > 0;
+  };
+
   const calculateTriangle = () => {
+    if (!isValidNumber(sideA) || !isValidNumber(sideB) || !isValidNumber(sideC)) {
+      Swal.fire({
+        icon: "error",
+        title: language === "th" ? "ข้อผิดพลาด" : "Error",
+        text: language === "th" 
+          ? "กรุณากรอกตัวเลขที่มากกว่า 0 และมีทศนิยมไม่เกิน 2 ตำแหน่ง" 
+          : "Please enter a number greater than 0 with up to 2 decimal places.",
+      });
+      return;
+    }
+
     const a = parseFloat(sideA);
     const b = parseFloat(sideB);
     const c = parseFloat(sideC);
 
-    if (isNaN(a) || isNaN(b) || isNaN(c)) {
-      setTriangleType(
-        language === "th"
-          ? "กรุณากรอกตัวเลขที่ถูกต้องสำหรับทุกด้าน"
-          : "Please enter valid numbers for all sides."
-      );
-      return;
-    }
-
     if (a + b <= c || a + c <= b || b + c <= a) {
-      setTriangleType(
-        language === "th"
-          ? "ด้านที่กรอกไม่สามารถเป็นสามเหลี่ยมได้"
-          : "The sides do not form a triangle."
-      );
+      Swal.fire({
+        icon: "error",
+        title: language === "th" ? "ข้อผิดพลาด" : "Error",
+        text: language === "th" 
+          ? "ด้านที่กรอกไม่สามารถเป็นสามเหลี่ยมได้" 
+          : "The sides do not form a triangle.",
+      });
       return;
     }
 
@@ -62,7 +72,6 @@ export default function Home() {
     } else if (a === b || b === c || a === c) {
       setTriangleType("isosceles");
       triangleClass = "border-b-[100px] border-yellow-500";
-      // ใช้สูตร Heron's Formula
       const s = (a + b + c) / 2;
       calculatedArea = Math.sqrt(s * (s - a) * (s - b) * (s - c));
     } else if (
@@ -72,7 +81,7 @@ export default function Home() {
     ) {
       setTriangleType("right");
       triangleClass = "bg-green-500 w-[100px] h-[100px] clip-path-polygon";
-      calculatedArea = 0.5 * a * b; // Assuming a and b are perpendicular sides
+      calculatedArea = 0.5 * a * b;
     } else {
       setTriangleType("scalene");
       triangleClass = "border-b-[100px] border-red-500";
