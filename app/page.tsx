@@ -160,8 +160,8 @@ export default function Home() {
           {language === "th" ? "ไทย" : "English"}
         </button>
       </div>
-      <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
-        <div className="flex flex-col gap-4 w-3/4 md:w-1/2">
+      <div className="flex flex-col items-center justify-center h-full w-full md:w-1/2">
+        <div className="flex flex-col items-center justify-center gap-4 w-3/4 md:w-1/2">
           <input
             type="number"
             value={sideA}
@@ -169,7 +169,7 @@ export default function Home() {
               setSideA(e.target.value)
             }
             placeholder={language === "th" ? "กรอกด้านที่ 1 ที่นี่ ..." : "type the side1 here ..."}
-            className="p-2 bg-[#fec960] text-white rounded-lg placeholder-white"
+            className="p-2 bg-[#fec960] text-white rounded-lg placeholder-white text-center"
           />
           <input
             type="number"
@@ -178,7 +178,7 @@ export default function Home() {
               setSideB(e.target.value)
             }
             placeholder={language === "th" ? "กรอกด้านที่ 2 ที่นี่ ..." : "type the side2 here ..."}
-            className="p-2 bg-[#fe95b6] text-white rounded-lg placeholder-white"
+            className="p-2 bg-[#fe95b6] text-white rounded-lg placeholder-white text-center"
           />
           <input
             type="number"
@@ -187,22 +187,23 @@ export default function Home() {
               setSideC(e.target.value)
             }
             placeholder={language === "th" ? "กรอกด้านที่ 3 ที่นี่ ..." : "type the side3 here ..."}
-            className="p-2 bg-[#fe9f73] text-white rounded-lg placeholder-white"
+            className="p-2 bg-[#fe9f73] text-white rounded-lg placeholder-white text-center"
           />
-        </div>
-        <div className="flex gap-4 mt-6">
-          <button
-            className="Btn1 px-6 py-2 text-center text-white rounded-lg hover:bg-[#f55454]"
-            onClick={resetInputs}
-          >
-            {language === "th" ? "รีเซ็ต" : "Reset"}
-          </button>
-          <button
-            className="Btn2 px-6 py-2 text-center text-white rounded-lg hover:bg-[#2c9968]"
-            onClick={calculateTriangle}
-          >
-            {language === "th" ? "คำนวณ" : "Calculate"}
-          </button>
+
+          <div className="flex gap-4 mt-6">
+            <button
+              className="Btn1 px-6 py-2 text-center text-white rounded-lg hover:bg-[#f55454]"
+              onClick={resetInputs}
+            >
+              {language === "th" ? "รีเซ็ต" : "Reset"}
+            </button>
+            <button
+              className="Btn2 px-6 py-2 text-center text-white rounded-lg hover:bg-[#2c9968]"
+              onClick={calculateTriangle}
+            >
+              {language === "th" ? "คำนวณ" : "Calculate"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
