@@ -10,6 +10,8 @@ git clone https://github.com/NoNnO7/triangle-program.git [folder_name]
 ```bash
 npm install
 
+ืnpm run build
+
 npm start
 ```
 4. เปิด Browser แล้วพิมพ์ใน Url ว่า [http://localhost:3000](http://localhost:3000)
