@@ -157,7 +157,7 @@ export default function Home() {
           onClick={toggleLanguage}
         >
           <FaGlobe className="mr-2 text-3xl" /> {/* Add the icon here */}
-          {language === "th" ? "ไทย" : "English"}
+          {language === "th" ? "ไทย" : "ENGLISH"}
         </button>
       </div>
       <div className="flex flex-col items-center justify-center h-full w-full md:w-1/2">
@@ -170,6 +170,7 @@ export default function Home() {
             }
             placeholder={language === "th" ? "กรอกด้านที่ 1 ที่นี่ ..." : "type the side1 here ..."}
             className="p-2 bg-[#fec960] text-white rounded-lg placeholder-white text-center"
+            step="0.01"  
           />
           <input
             type="number"
@@ -179,6 +180,7 @@ export default function Home() {
             }
             placeholder={language === "th" ? "กรอกด้านที่ 2 ที่นี่ ..." : "type the side2 here ..."}
             className="p-2 bg-[#fe95b6] text-white rounded-lg placeholder-white text-center"
+            step="0.01"  
           />
           <input
             type="number"
@@ -188,6 +190,7 @@ export default function Home() {
             }
             placeholder={language === "th" ? "กรอกด้านที่ 3 ที่นี่ ..." : "type the side3 here ..."}
             className="p-2 bg-[#fe9f73] text-white rounded-lg placeholder-white text-center"
+            step="0.01"  
           />
 
           <div className="flex gap-4 mt-6">
@@ -195,13 +198,13 @@ export default function Home() {
               className="Btn1 px-6 py-2 text-center text-white rounded-lg hover:bg-[#f55454]"
               onClick={resetInputs}
             >
-              {language === "th" ? "รีเซ็ต" : "Reset"}
+              {language === "th" ? "รีเซ็ต" : "reset"}
             </button>
             <button
               className="Btn2 px-6 py-2 text-center text-white rounded-lg hover:bg-[#2c9968]"
               onClick={calculateTriangle}
             >
-              {language === "th" ? "คำนวณ" : "Calculate"}
+              {language === "th" ? "คำนวณ" : "calculate"}
             </button>
           </div>
         </div>
