@@ -16,7 +16,7 @@ export default function Home() {
   const [sideB, setSideB] = useState<string>("");
   const [sideC, setSideC] = useState<string>("");
   const [triangleType, setTriangleType] = useState<string>("");
-  const [triangleClass, setTriangleClass] = useState<string>("");
+  const [, setTriangleClass] = useState<string>("");
   const [language, setLanguage] = useState<"th" | "en">("th");
   const [perimeter, setPerimeter] = useState<number | null>(null);
   const [area, setArea] = useState<number | null>(null);
@@ -62,7 +62,7 @@ export default function Home() {
     }
 
     let triangleClass = "";
-    let calculatedPerimeter = a + b + c;
+    const calculatedPerimeter = a + b + c;
     let calculatedArea = 0;
 
     if (a === b && b === c) {
