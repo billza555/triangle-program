@@ -95,7 +95,7 @@ export default function Home() {
     }
 
     let newTriangleClass = "";
-    const calculatedPerimeter = a + b + c;
+    const calculatedPerimeter = parseFloat((a + b + c).toFixed(2));
     let calculatedArea = 0;
 
     if (a === b && b === c) {
