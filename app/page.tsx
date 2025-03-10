@@ -16,12 +16,14 @@ import scaleneImg from "./assets/images/scalene.png";
 import iconImg from "./assets/images/Image_Icon.png";
 import Swal from "sweetalert2";
 
+type TriangleType = "" | "equilateral" | "isosceles" | "right" | "scalene";
+
 export default function Home() {
   const [sideA, setSideA] = useState<string>("");
   const [sideB, setSideB] = useState<string>("");
   const [sideC, setSideC] = useState<string>("");
-  const [triangleType, setTriangleType] = useState<string>("");
-  const [selectedType, setSelectedType] = useState<string>("");
+  const [triangleType, setTriangleType] = useState<TriangleType>("");
+  const [selectedType, setSelectedType] = useState<TriangleType>("");
   const [, setTriangleClass] = useState<string>("");
   const [language, setLanguage] = useState<"th" | "en">("th");
   const [perimeter, setPerimeter] = useState<number | null>(null);
@@ -36,7 +38,7 @@ export default function Home() {
     icon: iconImg,
   };
 
-  const triangleTypeLabels = {
+  const triangleTypeLabels: Record<TriangleType, { th: string; en: string }> = {
     "": { th: "เลือกชนิดสามเหลี่ยม", en: "Select triangle type" },
     equilateral: { th: "สามเหลี่ยมด้านเท่า", en: "Equilateral" },
     isosceles: { th: "สามเหลี่ยมหน้าจั่ว", en: "Isosceles" },
@@ -54,6 +56,10 @@ export default function Home() {
       setSelectedType(triangleType);
     }
   }, [triangleType]);
+
+  const canFormTriangle = (a: number, b: number, c: number): boolean => {
+    return a + b > c && a + c > b && b + c > a;
+  };
 
   const calculateTriangle = () => {
     if (
@@ -147,17 +153,11 @@ export default function Home() {
     setLanguage((prev) => (prev === "th" ? "en" : "th"));
   };
 
-  const suggestTriangleSides = (type: string) => {
+  const suggestTriangleSides = (type: TriangleType) => {
     setSelectedType(type);
-
-    if (
-      !isValidNumber(sideA) &&
-      !isValidNumber(sideB) &&
-      !isValidNumber(sideC)
-    ) {
-      return;
-    }
-
+  
+    const defaultSide = 5;
+    
     const validSides = [];
     if (isValidNumber(sideA))
       validSides.push({ side: "A", value: parseFloat(sideA) });
@@ -165,161 +165,264 @@ export default function Home() {
       validSides.push({ side: "B", value: parseFloat(sideB) });
     if (isValidNumber(sideC))
       validSides.push({ side: "C", value: parseFloat(sideC) });
+  
+    let referenceSide = validSides.length > 0 ? validSides[0].value : defaultSide;
 
-    if (validSides.length > 0) {
-      const referenceSide = validSides[0].value;
-
-      let suggestedSides = {
-        A: isValidNumber(sideA) ? parseFloat(sideA) : null,
-        B: isValidNumber(sideB) ? parseFloat(sideB) : null,
-        C: isValidNumber(sideC) ? parseFloat(sideC) : null,
-      };
-
-      let message = "";
-
-      switch (type) {
-        case "equilateral":
+    referenceSide = Math.round(referenceSide * 100) / 100;
+  
+    let suggestedSides = {
+      A: isValidNumber(sideA) ? parseFloat(sideA) : null,
+      B: isValidNumber(sideB) ? parseFloat(sideB) : null,
+      C: isValidNumber(sideC) ? parseFloat(sideC) : null,
+    };
+  
+    let message = "";
+  
+    switch (type) {
+      case "equilateral":
+        suggestedSides = {
+          A: referenceSide,
+          B: referenceSide,
+          C: referenceSide,
+        };
+        message =
+          language === "th"
+            ? `สามเหลี่ยมด้านเท่าต้องมีด้านทั้งสามเท่ากัน: ${referenceSide}`
+            : `Equilateral triangle requires all sides to be equal: ${referenceSide}`;
+        break;
+  
+      case "isosceles":
+        if (validSides.length === 0 || validSides.length === 1) {
+          const thirdSide = parseFloat((referenceSide * 1.5).toFixed(2));
+  
           suggestedSides = {
             A: referenceSide,
             B: referenceSide,
-            C: referenceSide,
+            C: thirdSide,
           };
           message =
             language === "th"
-              ? `สามเหลี่ยมด้านเท่าต้องมีด้านทั้งสามเท่ากัน: ${referenceSide}`
-              : `Equilateral triangle requires all sides to be equal: ${referenceSide}`;
-          break;
+              ? `สามเหลี่ยมหน้าจั่วต้องมีด้านเท่ากันอย่างน้อย 2 ด้าน, แนะนำ: A=${referenceSide}, B=${referenceSide}, C=${thirdSide}`
+              : `Isosceles triangle requires at least 2 equal sides, suggested: A=${referenceSide}, B=${referenceSide}, C=${thirdSide}`;
+        } else if (validSides.length >= 2) {
+          validSides.sort((a, b) => a.value - b.value);
 
-        case "isosceles":
-          if (validSides.length === 1) {
-            const thirdSide = parseFloat((referenceSide * 1.5).toFixed(2));
+          const currentTriangleValid = validSides.length >= 3 && 
+                                      (validSides[0].value + validSides[1].value > validSides[2].value);
+          const allEqual = 
+            isValidNumber(sideA) &&
+            isValidNumber(sideB) &&
+            isValidNumber(sideC) &&
+            parseFloat(sideA) === parseFloat(sideB) &&
+            parseFloat(sideB) === parseFloat(sideC);
+  
+          if (allEqual) {
 
+            const baseValue = parseFloat(sideA);
+            const newThirdSide = parseFloat((baseValue * 1.5).toFixed(2));
+            
             suggestedSides = {
-              A: referenceSide,
-              B: referenceSide,
-              C: thirdSide,
+              A: baseValue,
+              B: baseValue,
+              C: newThirdSide,
             };
-            message =
-              language === "th"
-                ? `สามเหลี่ยมหน้าจั่วต้องมีด้านเท่ากันอย่างน้อย 2 ด้าน, แนะนำ: A=${referenceSide}, B=${referenceSide}, C=${thirdSide}`
-                : `Isosceles triangle requires at least 2 equal sides, suggested: A=${referenceSide}, B=${referenceSide}, C=${thirdSide}`;
-          } else if (validSides.length >= 2) {
-            const allEqual =
-              isValidNumber(sideA) &&
-              isValidNumber(sideB) &&
-              isValidNumber(sideC) &&
-              parseFloat(sideA) === parseFloat(sideB) &&
-              parseFloat(sideB) === parseFloat(sideC);
-
-            if (allEqual) {
-              const baseValue = parseFloat(sideA);
-              const newThirdSide = parseFloat((baseValue * 1.5).toFixed(2));
-
-              suggestedSides = {
-                A: baseValue,
-                B: baseValue,
-                C: newThirdSide,
-              };
-
-              message =
-                language === "th"
-                  ? `เปลี่ยนจากสามเหลี่ยมด้านเท่าเป็นสามเหลี่ยมหน้าจั่ว: A=${baseValue}, B=${baseValue}, C=${newThirdSide}`
-                  : `Change from equilateral to isosceles: A=${baseValue}, B=${baseValue}, C=${newThirdSide}`;
+            
+            message = language === "th"
+              ? `เปลี่ยนจากสามเหลี่ยมด้านเท่าเป็นสามเหลี่ยมหน้าจั่ว: A=${baseValue}, B=${baseValue}, C=${newThirdSide}`
+              : `Change from equilateral to isosceles: A=${baseValue}, B=${baseValue}, C=${newThirdSide}`;
+          } else if (!currentTriangleValid) {
+            const smallestSide = validSides[0].value;
+            
+            suggestedSides = {
+              A: smallestSide,
+              B: smallestSide,
+              C: smallestSide * 1.8,
+            };
+            
+            message = language === "th"
+              ? `สามเหลี่ยมหน้าจั่วแนะนำ: A=${smallestSide}, B=${smallestSide}, C=${(smallestSide * 1.8).toFixed(2)}`
+              : `Suggested isosceles triangle: A=${smallestSide}, B=${smallestSide}, C=${(smallestSide * 1.8).toFixed(2)}`;
+          } else {
+            let sideToAdjust = "C";
+            let valueToUse = validSides[0].value;
+            
+            if (validSides[0].value === validSides[1].value) {
+              sideToAdjust = "C";
+              valueToUse = validSides[0].value;
+            } else if (validSides[1].value === validSides[2].value) {
+              valueToUse = validSides[1].value;
             } else {
-              suggestedSides = {
-                A: validSides[0].value,
-                B: validSides[0].value,
-                C:
-                  validSides.length > 2
-                    ? validSides[2].value
-                    : parseFloat((validSides[0].value * 1.5).toFixed(2)),
-              };
-              message =
-                language === "th"
-                  ? `สามเหลี่ยมหน้าจั่วต้องมีด้านเท่ากันอย่างน้อย 2 ด้าน, แนะนำให้ปรับด้าน`
-                  : `Isosceles triangle requires at least 2 equal sides, suggested adjustment`;
+              sideToAdjust = "B";
+              valueToUse = validSides[0].value;
             }
+            
+            suggestedSides = {
+              A: sideToAdjust === "A" ? valueToUse : validSides[0].value,
+              B: sideToAdjust === "B" ? valueToUse : validSides[1].value,
+              C: sideToAdjust === "C" ? valueToUse : validSides[2].value,
+            };
+            
+            message = language === "th"
+              ? `สามเหลี่ยมหน้าจั่วต้องมีด้านเท่ากันอย่างน้อย 2 ด้าน, แนะนำให้ปรับด้าน ${sideToAdjust}`
+              : `Isosceles triangle requires at least 2 equal sides, suggested adjusting side ${sideToAdjust}`;
           }
-          break;
+        }
+        break;
+  
+      case "right":
+        let scale = referenceSide / 3;
+  
+        scale = Math.round(scale * 100) / 100;
+  
+        if (Math.abs(scale - Math.round(scale)) < 0.01) {
+          scale = Math.round(scale);
+        }
+  
+        const rightSideA = parseFloat((3 * scale).toFixed(2));
+        const rightSideB = parseFloat((4 * scale).toFixed(2));
+        const rightSideC = parseFloat((5 * scale).toFixed(2));
+  
+        const a = rightSideA;
+        const b = rightSideB;
+        const c = rightSideC;
 
-        case "right":
-          let scale = referenceSide / 3;
-
-          scale = Math.round(scale * 100) / 100;
-
-          if (Math.abs(scale - Math.round(scale)) < 0.01) {
-            scale = Math.round(scale);
-          }
-
-          const rightSideA = parseFloat((3 * scale).toFixed(2));
-          const rightSideB = parseFloat((4 * scale).toFixed(2));
-          const rightSideC = parseFloat((5 * scale).toFixed(2));
-
+        if (a + b <= c || a + c <= b || b + c <= a) {
+          const newScale = referenceSide / 5;
+          const adjustedA = parseFloat((5 * newScale).toFixed(2));
+          const adjustedB = parseFloat((12 * newScale).toFixed(2)); 
+          const adjustedC = parseFloat((13 * newScale).toFixed(2));
+          
+          suggestedSides = {
+            A: adjustedA,
+            B: adjustedB, 
+            C: adjustedC
+          };
+          
+          message = language === "th"
+            ? `สามเหลี่ยมมุมฉากแนะนำอัตราส่วน 5:12:13, ได้: A=${adjustedA}, B=${adjustedB}, C=${adjustedC}`
+            : `Right triangle suggested with 5:12:13 ratio: A=${adjustedA}, B=${adjustedB}, C=${adjustedC}`;
+        } else {
           suggestedSides = {
             A: rightSideA,
             B: rightSideB,
             C: rightSideC,
           };
+          
+          message = language === "th"
+            ? `สามเหลี่ยมมุมฉากแนะนำอัตราส่วน 3:4:5, ได้: A=${rightSideA}, B=${rightSideB}, C=${rightSideC}`
+            : `Right triangle suggested with 3:4:5 ratio: A=${rightSideA}, B=${rightSideB}, C=${rightSideC}`;
+        }
+        break;
+  
+      case "scalene":
+        if (validSides.length >= 3) {
+          validSides.sort((a, b) => a.value - b.value);
+        }
+  
+        const smallestSide = validSides.length > 0 ? validSides[0].value : referenceSide;
 
-          message =
-            language === "th"
-              ? `สามเหลี่ยมมุมฉากแนะนำอัตราส่วน 3:4:5, ได้: A=${rightSideA}, B=${rightSideB}, C=${rightSideC}`
-              : `Right triangle suggested with 3:4:5 ratio: A=${rightSideA}, B=${rightSideB}, C=${rightSideC}`;
-          break;
+        const scaleneSideB = parseFloat((smallestSide * 1.4).toFixed(2));
+        const scaleneSideC = parseFloat((smallestSide * 2.2).toFixed(2));
 
-        case "scalene":
-          const scaleneSideB = parseFloat((referenceSide * 1.2).toFixed(2));
-          const scaleneSideC = parseFloat((referenceSide * 1.5).toFixed(2));
+        if (smallestSide + scaleneSideB <= scaleneSideC) {
 
+          const adjustedC = parseFloat((smallestSide + scaleneSideB - 0.01).toFixed(2));
+          
           suggestedSides = {
-            A: referenceSide,
+            A: smallestSide,
             B: scaleneSideB,
-            C: scaleneSideC,
+            C: adjustedC
           };
-          message =
-            language === "th"
-              ? `สามเหลี่ยมด้านไม่เท่าต้องมีด้านไม่เท่ากันทั้งสามด้าน, แนะนำ: A=${referenceSide}, B=${scaleneSideB}, C=${scaleneSideC}`
-              : `Scalene triangle requires all sides to be different, suggested: A=${referenceSide}, B=${scaleneSideB}, C=${scaleneSideC}`;
-          break;
-      }
+          
+          message = language === "th"
+            ? `สามเหลี่ยมด้านไม่เท่าต้องมีด้านไม่เท่ากันทั้งสามด้าน, แนะนำ: A=${smallestSide}, B=${scaleneSideB}, C=${adjustedC}`
+            : `Scalene triangle requires all sides to be different, suggested: A=${smallestSide}, B=${scaleneSideB}, C=${adjustedC}`;
+        } else {
+          suggestedSides = {
+            A: smallestSide,
+            B: scaleneSideB,
+            C: scaleneSideC
+          };
+          
+          message = language === "th"
+            ? `สามเหลี่ยมด้านไม่เท่าต้องมีด้านไม่เท่ากันทั้งสามด้าน, แนะนำ: A=${smallestSide}, B=${scaleneSideB}, C=${scaleneSideC}`
+            : `Scalene triangle requires all sides to be different, suggested: A=${smallestSide}, B=${scaleneSideB}, C=${scaleneSideC}`;
+        }
+        break;
+    }
+  
+    Swal.fire({
+      title: language === "th" ? "ข้อเสนอแนะ" : "Suggestion",
+      text: message,
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonText:
+        language === "th" ? "ใช้ค่าที่แนะนำ" : "Use suggested values",
+      cancelButtonText: language === "th" ? "ยกเลิก" : "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
 
-      Swal.fire({
-        title: language === "th" ? "ข้อเสนอแนะ" : "Suggestion",
-        text: message,
-        icon: "info",
-        showCancelButton: true,
-        confirmButtonText:
-          language === "th" ? "ใช้ค่าที่แนะนำ" : "Use suggested values",
-        cancelButtonText: language === "th" ? "ยกเลิก" : "Cancel",
-      }).then((result) => {
-        if (result.isConfirmed) {
+        if (suggestedSides.A !== null && suggestedSides.B !== null && suggestedSides.C !== null) {
+
+          const a = suggestedSides.A;
+          const b = suggestedSides.B;
+          const c = suggestedSides.C;
+          
+
+          if (a + b <= c || a + c <= b || b + c <= a) {
+
+            const base = Math.min(a, b, c);
+            suggestedSides.A = base;
+            suggestedSides.B = base;
+            suggestedSides.C = base * 1.5;
+          }
+
           if (suggestedSides.A !== null) {
             const formattedA = Number.isInteger(suggestedSides.A)
               ? suggestedSides.A.toString()
               : suggestedSides.A.toFixed(2);
             setSideA(formattedA);
           }
-
+  
           if (suggestedSides.B !== null) {
             const formattedB = Number.isInteger(suggestedSides.B)
               ? suggestedSides.B.toString()
               : suggestedSides.B.toFixed(2);
             setSideB(formattedB);
           }
-
+  
           if (suggestedSides.C !== null) {
             const formattedC = Number.isInteger(suggestedSides.C)
               ? suggestedSides.C.toString()
               : suggestedSides.C.toFixed(2);
             setSideC(formattedC);
           }
-
-          setTimeout(() => {
-            calculateTriangle();
-          }, 100);
         }
-      });
-    }
+        
+
+        setTimeout(() => {
+
+          const a = parseFloat(sideA);
+          const b = parseFloat(sideB);
+          const c = parseFloat(sideC);
+          
+          if (isValidNumber(sideA) && isValidNumber(sideB) && isValidNumber(sideC)) {
+            if (a + b > c && a + c > b && b + c > a) {
+              calculateTriangle();
+            } else {
+
+              Swal.fire({
+                icon: "info",
+                title: language === "th" ? "ข้อความ" : "Message",
+                text: language === "th" 
+                  ? "ได้ปรับค่าให้เป็นสามเหลี่ยม โปรดกดคำนวณอีกครั้ง" 
+                  : "Values have been adjusted. Please press Calculate again."
+              });
+            }
+          }
+        }, 150);
+      }
+    });
   };
 
   return (
@@ -327,7 +430,6 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center h-full w-full md:w-1/2 bg-[#faede1]">
         <div className="flex items-center">
           <FaHome className="text-[#fe9f73] text-3xl mr-2" />
-          {}
           <div className="relative">
             <div
               className="flex items-center bg-[#fcc1a2] rounded-lg px-4 py-2 cursor-pointer"
@@ -335,14 +437,14 @@ export default function Home() {
             >
               <FaSearch className="text-white text-xl mr-2" />
               <div className="flex-grow text-white">
-                {triangleTypeLabels[selectedType || ""][language]}
+                {triangleTypeLabels[selectedType][language]}
               </div>
               <FaChevronDown className="text-white ml-2" />
             </div>
 
             {dropdownOpen && (
               <div className="absolute mt-1 w-full bg-white rounded-lg shadow-lg z-10">
-                {Object.keys(triangleTypeLabels)
+                {(Object.keys(triangleTypeLabels) as TriangleType[])
                   .filter((type) => type !== "")
                   .map((type) => (
                     <div
@@ -364,7 +466,7 @@ export default function Home() {
         <h1 className="text-[60px] font-bold text-white">
           {selectedType
             ? triangleTypeLabels[selectedType][language]
-            : language === "th"
+            : language === "th" 
             ? "สามเหลี่ยม"
             : "Triangle"}
         </h1>
@@ -407,7 +509,6 @@ export default function Home() {
                   )}
                 </div>
 
-                {}
                 {perimeter && area !== null && (
                   <div className="mt-4 p-4 bg-[#fe9f73] rounded-xl">
                     <p className="text-lg text-white">
@@ -437,7 +538,6 @@ export default function Home() {
           className="flex flex-row items-center mt-24 px-2 py-2 bg-[#fe9f73] text-white rounded-full hover:bg-[#ff8952]"
           onClick={toggleLanguage}
         >
-          <FaGlobe className="mr-2 text-3xl" />
           <FaGlobe className="mr-2 text-3xl" />
           {language === "th" ? "ไทย" : "ENGLISH"}
         </button>
