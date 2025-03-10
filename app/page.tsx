@@ -53,13 +53,18 @@ export default function Home() {
   }, [triangleType]);
 
   const calculateTriangle = () => {
-    if (!isValidNumber(sideA) || !isValidNumber(sideB) || !isValidNumber(sideC)) {
+    if (
+      !isValidNumber(sideA) ||
+      !isValidNumber(sideB) ||
+      !isValidNumber(sideC)
+    ) {
       Swal.fire({
         icon: "error",
         title: language === "th" ? "ข้อผิดพลาด" : "Error",
-        text: language === "th" 
-          ? "กรุณากรอกตัวเลขที่มากกว่า 0 และมีทศนิยมไม่เกิน 2 ตำแหน่ง" 
-          : "Please enter a number greater than 0 with up to 2 decimal places.",
+        text:
+          language === "th"
+            ? "กรุณากรอกตัวเลขที่มากกว่า 0 และมีทศนิยมไม่เกิน 2 ตำแหน่ง"
+            : "Please enter a number greater than 0 with up to 2 decimal places.",
       });
       return;
     }
@@ -72,24 +77,25 @@ export default function Home() {
       Swal.fire({
         icon: "error",
         title: language === "th" ? "ข้อผิดพลาด" : "Error",
-        text: language === "th" 
-          ? "ด้านที่กรอกไม่สามารถเป็นสามเหลี่ยมได้" 
-          : "The sides do not form a triangle.",
+        text:
+          language === "th"
+            ? "ด้านที่กรอกไม่สามารถเป็นสามเหลี่ยมได้"
+            : "The sides do not form a triangle.",
       });
       return;
     }
 
-    let triangleClass = "";
+    let newTriangleClass = "";
     const calculatedPerimeter = a + b + c;
     let calculatedArea = 0;
 
     if (a === b && b === c) {
       setTriangleType("equilateral");
-      triangleClass = "border-b-[100px] border-blue-500";
+      newTriangleClass = "border-b-[100px] border-blue-500";
       calculatedArea = (Math.sqrt(3) / 4) * a * a;
     } else if (a === b || b === c || a === c) {
       setTriangleType("isosceles");
-      triangleClass = "border-b-[100px] border-yellow-500";
+      newTriangleClass = "border-b-[100px] border-yellow-500";
       const s = (a + b + c) / 2;
       calculatedArea = Math.sqrt(s * (s - a) * (s - b) * (s - c));
     } else if (
@@ -114,14 +120,14 @@ export default function Home() {
       calculatedArea = 0.5 * base * height;
     } else {
       setTriangleType("scalene");
-      triangleClass = "border-b-[100px] border-red-500";
+      newTriangleClass = "border-b-[100px] border-red-500";
       const s = (a + b + c) / 2;
       calculatedArea = Math.sqrt(s * (s - a) * (s - b) * (s - c));
     }
 
     setPerimeter(calculatedPerimeter);
     setArea(calculatedArea);
-    setTriangleClass(triangleClass);
+    setTriangleClass(newTriangleClass);
   };
 
   const resetInputs = () => {
@@ -133,6 +139,8 @@ export default function Home() {
     setTriangleClass("");
     setPerimeter(null);
     setArea(null);
+    setSearchInput("");
+    setSelectedTriangle(null);
   };
 
   const toggleLanguage = () => {
@@ -354,31 +362,61 @@ export default function Home() {
               <div className="text-center">
                 <div className="mx-auto flex justify-center">
                   {triangleType === "equilateral" && (
-                    <Image src={triangleImages.equilateral} alt="Equilateral Triangle" width={200} height={200} />
+                    <Image
+                      src={triangleImages.equilateral}
+                      alt="Equilateral Triangle"
+                      width={200}
+                      height={200}
+                    />
                   )}
                   {triangleType === "isosceles" && (
-                    <Image src={triangleImages.isosceles} alt="Isosceles Triangle" width={200} height={200} />
+                    <Image
+                      src={triangleImages.isosceles}
+                      alt="Isosceles Triangle"
+                      width={200}
+                      height={200}
+                    />
                   )}
                   {triangleType === "right" && (
-                    <Image src={triangleImages.right} alt="Right Triangle" width={200} height={200} />
+                    <Image
+                      src={triangleImages.right}
+                      alt="Right Triangle"
+                      width={200}
+                      height={200}
+                    />
                   )}
                   {triangleType === "scalene" && (
-                    <Image src={triangleImages.scalene} alt="Scalene Triangle" width={200} height={200} />
+                    <Image
+                      src={triangleImages.scalene}
+                      alt="Scalene Triangle"
+                      width={200}
+                      height={200}
+                    />
                   )}
                 </div>
 
                 {/* Area and perimeter box below the image inside the white box */}
                 {perimeter && area !== null && (
                   <div className="mt-4 p-4 bg-[#fe9f73] rounded-xl">
-                    <p className="text-lg text-white">{language === "th" ? "ขนาด" : "Area"}: {area.toFixed(2)}</p>
-                    <p className="text-lg text-white">{language === "th" ? "เส้นรอบรูป" : "Perimeter"}: {perimeter}</p>
+                    <p className="text-lg text-white">
+                      {language === "th" ? "ขนาด" : "Area"}: {area.toFixed(2)}
+                    </p>
+                    <p className="text-lg text-white">
+                      {language === "th" ? "เส้นรอบรูป" : "Perimeter"}:{" "}
+                      {perimeter}
+                    </p>
                   </div>
                 )}
               </div>
             ) : (
               // Show default equilateral triangle image before calculation
               <div className="text-center flex flex-col items-center justify-center">
-                <Image src={triangleImages.icon} alt="Equilateral Triangle" width={200} height={200} />
+                <Image
+                  src={triangleImages.icon}
+                  alt="Equilateral Triangle"
+                  width={200}
+                  height={200}
+                />
               </div>
             )}
           </div>
@@ -388,6 +426,7 @@ export default function Home() {
           className="flex flex-row items-center mt-24 px-2 py-2 bg-[#fe9f73] text-white rounded-full hover:bg-[#ff8952]"
           onClick={toggleLanguage}
         >
+          <FaGlobe className="mr-2 text-3xl" />
           <FaGlobe className="mr-2 text-3xl" />
           {language === "th" ? "ไทย" : "ENGLISH"}
         </button>
@@ -400,9 +439,13 @@ export default function Home() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setSideA(e.target.value)
             }
-            placeholder={language === "th" ? "กรอกด้านที่ 1 ที่นี่ ..." : "type the side1 here ..."}
+            placeholder={
+              language === "th"
+                ? "กรอกด้านที่ 1 ที่นี่ ..."
+                : "type the side1 here ..."
+            }
             className="p-2 bg-[#fec960] text-white rounded-lg placeholder-white text-center"
-            step="0.01"  
+            step="0.01"
           />
           <input
             type="number"
@@ -410,9 +453,13 @@ export default function Home() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setSideB(e.target.value)
             }
-            placeholder={language === "th" ? "กรอกด้านที่ 2 ที่นี่ ..." : "type the side2 here ..."}
+            placeholder={
+              language === "th"
+                ? "กรอกด้านที่ 2 ที่นี่ ..."
+                : "type the side2 here ..."
+            }
             className="p-2 bg-[#fe95b6] text-white rounded-lg placeholder-white text-center"
-            step="0.01"  
+            step="0.01"
           />
           <input
             type="number"
@@ -420,9 +467,13 @@ export default function Home() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setSideC(e.target.value)
             }
-            placeholder={language === "th" ? "กรอกด้านที่ 3 ที่นี่ ..." : "type the side3 here ..."}
+            placeholder={
+              language === "th"
+                ? "กรอกด้านที่ 3 ที่นี่ ..."
+                : "type the side3 here ..."
+            }
             className="p-2 bg-[#fe9f73] text-white rounded-lg placeholder-white text-center"
-            step="0.01"  
+            step="0.01"
           />
 
           <div className="flex gap-4 mt-6">
