@@ -1,25 +1,27 @@
 "use client";
 
-import { useState } from "react";
-import { FaGlobe, FaHome, FaEllipsisH, FaSearch } from 'react-icons/fa';
+import { useState, useEffect } from "react";
+import { FaGlobe, FaHome, FaEllipsisH, FaSearch, FaChevronDown } from 'react-icons/fa';
 import Image from "next/image"; 
 import equilateralImg from './assets/images/equilateral.png';
 import isoscelesImg from './assets/images/isosceles.png';
 import rightTriangleImg from './assets/images/right_triangle.png';
 import scaleneImg from './assets/images/scalene.png';
-import iconImg from './assets/images/Image_Icon.png'; // Import Image from next/image
+import iconImg from './assets/images/Image_Icon.png';
 import Swal from 'sweetalert2';
 
 export default function Home() {
-  // State สำหรับเก็บค่าด้านของสามเหลี่ยม
+  // State for triangle sides
   const [sideA, setSideA] = useState<string>("");
   const [sideB, setSideB] = useState<string>("");
   const [sideC, setSideC] = useState<string>("");
   const [triangleType, setTriangleType] = useState<string>("");
+  const [selectedType, setSelectedType] = useState<string>(""); // For dropdown
   const [, setTriangleClass] = useState<string>("");
   const [language, setLanguage] = useState<"th" | "en">("th");
   const [perimeter, setPerimeter] = useState<number | null>(null);
   const [area, setArea] = useState<number | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   
   const triangleImages = {
     equilateral: equilateralImg,
@@ -29,10 +31,26 @@ export default function Home() {
     icon: iconImg
   };
 
+  // Triangle type translation
+  const triangleTypeLabels = {
+    "": { th: "เลือกชนิดสามเหลี่ยม", en: "Select triangle type" },
+    "equilateral": { th: "สามเหลี่ยมด้านเท่า", en: "Equilateral" },
+    "isosceles": { th: "สามเหลี่ยมหน้าจั่ว", en: "Isosceles" },
+    "right": { th: "สามเหลี่ยมมุมฉาก", en: "Right" },
+    "scalene": { th: "สามเหลี่ยมด้านไม่เท่า", en: "Scalene" }
+  };
+
   const isValidNumber = (value: string): boolean => {
     const regex = /^\d+(\.\d{1,2})?$/; // ตรวจสอบว่ามีทศนิยมไม่เกิน 2 ตำแหน่ง
     return regex.test(value) && parseFloat(value) > 0;
   };
+
+  // Update triangle type in dropdown after calculation
+  useEffect(() => {
+    if (triangleType) {
+      setSelectedType(triangleType);
+    }
+  }, [triangleType]);
 
   const calculateTriangle = () => {
     if (!isValidNumber(sideA) || !isValidNumber(sideB) || !isValidNumber(sideC)) {
@@ -75,13 +93,25 @@ export default function Home() {
       const s = (a + b + c) / 2;
       calculatedArea = Math.sqrt(s * (s - a) * (s - b) * (s - c));
     } else if (
-      a * a + b * b === c * c ||
-      a * a + c * c === b * b ||
-      b * b + c * c === a * a
+      Math.abs(a * a + b * b - c * c) < 0.01 ||
+      Math.abs(a * a + c * c - b * b) < 0.01 ||
+      Math.abs(b * b + c * c - a * a) < 0.01
     ) {
       setTriangleType("right");
       triangleClass = "bg-green-500 w-[100px] h-[100px] clip-path-polygon";
-      calculatedArea = 0.5 * a * b;
+      // For right triangle, find the two shorter sides
+      let base, height;
+      if (a * a + b * b - c * c < 0.01) {
+        base = a;
+        height = b;
+      } else if (a * a + c * c - b * b < 0.01) {
+        base = a;
+        height = c;
+      } else {
+        base = b;
+        height = c;
+      }
+      calculatedArea = 0.5 * base * height;
     } else {
       setTriangleType("scalene");
       triangleClass = "border-b-[100px] border-red-500";
@@ -99,6 +129,7 @@ export default function Home() {
     setSideB("");
     setSideC("");
     setTriangleType("");
+    setSelectedType("");
     setTriangleClass("");
     setPerimeter(null);
     setArea(null);
@@ -108,22 +139,214 @@ export default function Home() {
     setLanguage((prev) => (prev === "th" ? "en" : "th"));
   };
 
+  // Function to suggest triangle sides when type is selected
+  const suggestTriangleSides = (type: string) => {
+    setSelectedType(type);
+    
+    // Only suggest if at least one side is already filled
+    if (!isValidNumber(sideA) && !isValidNumber(sideB) && !isValidNumber(sideC)) {
+      return;
+    }
+    
+    // Get current valid sides
+    const validSides = [];
+    if (isValidNumber(sideA)) validSides.push({ side: "A", value: parseFloat(sideA) });
+    if (isValidNumber(sideB)) validSides.push({ side: "B", value: parseFloat(sideB) });
+    if (isValidNumber(sideC)) validSides.push({ side: "C", value: parseFloat(sideC) });
+    
+    // If we have at least one side, suggest changes
+    if (validSides.length > 0) {
+      // Use the first valid side as a reference
+      const referenceSide = validSides[0].value;
+      
+      let suggestedSides = {
+        A: isValidNumber(sideA) ? parseFloat(sideA) : null,
+        B: isValidNumber(sideB) ? parseFloat(sideB) : null,
+        C: isValidNumber(sideC) ? parseFloat(sideC) : null
+      };
+      
+      let message = "";
+      
+      switch (type) {
+        case "equilateral":
+          // All sides must be equal
+          suggestedSides = { A: referenceSide, B: referenceSide, C: referenceSide };
+          message = language === "th" 
+            ? `สามเหลี่ยมด้านเท่าต้องมีด้านทั้งสามเท่ากัน: ${referenceSide}`
+            : `Equilateral triangle requires all sides to be equal: ${referenceSide}`;
+          break;
+          
+        case "isosceles":
+          // At least two sides must be equal
+          if (validSides.length === 1) {
+            // Round the third side to max 2 decimal places
+            const thirdSide = parseFloat((referenceSide * 1.5).toFixed(2));
+            
+            suggestedSides = { 
+              A: referenceSide, 
+              B: referenceSide, 
+              C: thirdSide
+            };
+            message = language === "th"
+              ? `สามเหลี่ยมหน้าจั่วต้องมีด้านเท่ากันอย่างน้อย 2 ด้าน, แนะนำ: A=${referenceSide}, B=${referenceSide}, C=${thirdSide}`
+              : `Isosceles triangle requires at least 2 equal sides, suggested: A=${referenceSide}, B=${referenceSide}, C=${thirdSide}`;
+          } else if (validSides.length >= 2) {
+            // Check if all three sides are equal (equilateral)
+            const allEqual = (isValidNumber(sideA) && isValidNumber(sideB) && isValidNumber(sideC)) && 
+                             (parseFloat(sideA) === parseFloat(sideB) && parseFloat(sideB) === parseFloat(sideC));
+            
+            if (allEqual) {
+              // If currently equilateral, modify one side to make it isosceles
+              const baseValue = parseFloat(sideA);
+              const newThirdSide = parseFloat((baseValue * 1.5).toFixed(2));
+              
+              suggestedSides = {
+                A: baseValue,
+                B: baseValue,
+                C: newThirdSide
+              };
+              
+              message = language === "th"
+                ? `เปลี่ยนจากสามเหลี่ยมด้านเท่าเป็นสามเหลี่ยมหน้าจั่ว: A=${baseValue}, B=${baseValue}, C=${newThirdSide}`
+                : `Change from equilateral to isosceles: A=${baseValue}, B=${baseValue}, C=${newThirdSide}`;
+            } else {
+              // Make two sides equal, keep third side different
+              suggestedSides = {
+                A: validSides[0].value,
+                B: validSides[0].value,
+                C: validSides.length > 2 ? validSides[2].value : parseFloat((validSides[0].value * 1.5).toFixed(2))
+              };
+              message = language === "th"
+                ? `สามเหลี่ยมหน้าจั่วต้องมีด้านเท่ากันอย่างน้อย 2 ด้าน, แนะนำให้ปรับด้าน`
+                : `Isosceles triangle requires at least 2 equal sides, suggested adjustment`;
+            }
+          }
+          break;
+          
+        case "right":
+          // Create a 3-4-5 right triangle (or scaled version)
+          // To ensure clean values, let's use integers or round to 2 decimal places max
+          let scale = referenceSide / 3; // Scale from the 3-4-5 triangle
+          
+          // Round scale to 2 decimal places to avoid validation errors
+          scale = Math.round(scale * 100) / 100;
+          
+          // If scale is close to an integer, make it an integer
+          if (Math.abs(scale - Math.round(scale)) < 0.01) {
+            scale = Math.round(scale);
+          }
+          
+          const rightSideA = parseFloat((3 * scale).toFixed(2));
+          const rightSideB = parseFloat((4 * scale).toFixed(2));
+          const rightSideC = parseFloat((5 * scale).toFixed(2));
+          
+          suggestedSides = {
+            A: rightSideA,
+            B: rightSideB,
+            C: rightSideC
+          };
+          
+          message = language === "th"
+            ? `สามเหลี่ยมมุมฉากแนะนำอัตราส่วน 3:4:5, ได้: A=${rightSideA}, B=${rightSideB}, C=${rightSideC}`
+            : `Right triangle suggested with 3:4:5 ratio: A=${rightSideA}, B=${rightSideB}, C=${rightSideC}`;
+          break;
+          
+        case "scalene":
+          // Make sure all sides are different with properly rounded values
+          const scaleneSideB = parseFloat((referenceSide * 1.2).toFixed(2));
+          const scaleneSideC = parseFloat((referenceSide * 1.5).toFixed(2));
+          
+          suggestedSides = {
+            A: referenceSide,
+            B: scaleneSideB,
+            C: scaleneSideC
+          };
+          message = language === "th"
+            ? `สามเหลี่ยมด้านไม่เท่าต้องมีด้านไม่เท่ากันทั้งสามด้าน, แนะนำ: A=${referenceSide}, B=${scaleneSideB}, C=${scaleneSideC}`
+            : `Scalene triangle requires all sides to be different, suggested: A=${referenceSide}, B=${scaleneSideB}, C=${scaleneSideC}`;
+          break;
+      }
+      
+      // Show suggestion in a popup
+      Swal.fire({
+        title: language === "th" ? "ข้อเสนอแนะ" : "Suggestion",
+        text: message,
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: language === "th" ? "ใช้ค่าที่แนะนำ" : "Use suggested values",
+        cancelButtonText: language === "th" ? "ยกเลิก" : "Cancel"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Format values to have at most 2 decimal places
+          if (suggestedSides.A !== null) {
+            const formattedA = Number.isInteger(suggestedSides.A) ? 
+              suggestedSides.A.toString() : 
+              suggestedSides.A.toFixed(2);
+            setSideA(formattedA);
+          }
+          
+          if (suggestedSides.B !== null) {
+            const formattedB = Number.isInteger(suggestedSides.B) ? 
+              suggestedSides.B.toString() : 
+              suggestedSides.B.toFixed(2);
+            setSideB(formattedB);
+          }
+          
+          if (suggestedSides.C !== null) {
+            const formattedC = Number.isInteger(suggestedSides.C) ? 
+              suggestedSides.C.toString() : 
+              suggestedSides.C.toFixed(2);
+            setSideC(formattedC);
+          }
+          
+          // Automatically calculate after applying suggested values
+          setTimeout(() => {
+            calculateTriangle();
+          }, 100); // Small delay to ensure state updates before calculation
+        }
+      });
+    }
+  };
+
   return (
     <div className="flex bg-white h-screen w-screen">
       <div className="flex flex-col items-center justify-center h-full w-full md:w-1/2 bg-[#faede1]">
         <div className="flex items-center">
           <FaHome className="text-[#fe9f73] text-3xl mr-2" />
-          <div className="flex items-center bg-[#fcc1a2] rounded-lg px-4 py-2">
-            <FaSearch className="text-white text-xl mr-2 " />
-            <input
-              type="text"
-              className="flex-grow bg-transparent outline-none text-white"
-            />
+          {/* Replace search input with dropdown */}
+          <div className="relative">
+            <div 
+              className="flex items-center bg-[#fcc1a2] rounded-lg px-4 py-2 cursor-pointer"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              <FaSearch className="text-white text-xl mr-2" />
+              <div className="flex-grow text-white">{triangleTypeLabels[selectedType || ""][language]}</div>
+              <FaChevronDown className="text-white ml-2" />
+            </div>
+            
+            {dropdownOpen && (
+              <div className="absolute mt-1 w-full bg-white rounded-lg shadow-lg z-10">
+                {Object.keys(triangleTypeLabels).filter(type => type !== "").map((type) => (
+                  <div 
+                    key={type}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => {
+                      suggestTriangleSides(type);
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    {triangleTypeLabels[type][language]}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <FaEllipsisH className="text-[#fe9f73] text-3xl ml-2" />
         </div>
-        <h1 className="text-[80px] font-bold text-white">
-          {language === "th" ? "สามเหลี่ยม" : "Triangle"}
+        <h1 className="text-[60px] font-bold text-white">
+          {selectedType ? 
+            triangleTypeLabels[selectedType][language] : 
+            (language === "th" ? "สามเหลี่ยม" : "Triangle")}
         </h1>
         <div className="w-[400px] h-[250px] bg-white rounded-xl">
           <div className="m-4 p-2 flex flex-col items-center justify-center">
@@ -165,7 +388,7 @@ export default function Home() {
           className="flex flex-row items-center mt-24 px-2 py-2 bg-[#fe9f73] text-white rounded-full hover:bg-[#ff8952]"
           onClick={toggleLanguage}
         >
-          <FaGlobe className="mr-2 text-3xl" /> {/* Add the icon here */}
+          <FaGlobe className="mr-2 text-3xl" />
           {language === "th" ? "ไทย" : "ENGLISH"}
         </button>
       </div>
